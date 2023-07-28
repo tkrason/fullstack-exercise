@@ -3,6 +3,8 @@ package com.example.controller.auth
 import com.example.application.config.Config
 import com.example.application.plugins.ErrorMessageDto
 import com.example.controller.Controller
+import com.example.controller.auth.dto.LoginRequestDto
+import com.example.controller.auth.dto.LoginResponseDto
 import com.example.controller.auth.dto.RegisterNewUserRequestDto
 import com.example.controller.auth.dto.RegisterNewUserResponseDto
 import com.example.controller.auth.dto.toInternalModel
@@ -31,6 +33,7 @@ class AuthController(
     override fun Route.routesForRegistrationOnBasePath() {
         registerNewUser()
         verifyUser()
+        getLoginToken()
     }
 
     private fun Route.registerNewUser() = post("/register", {
@@ -63,5 +66,16 @@ class AuthController(
         val token = call.parameters.getOrFail("token")
         userService.verifyUser(token)
         call.respond(HttpStatusCode.OK)
+    }
+
+    private fun Route.getLoginToken() = post("/login", {
+        tags = apiTags
+        description = "Get login token for username / password combination"
+        request { body<LoginRequestDto>() }
+    }) {
+        val loginRequest = call.receive<LoginRequestDto>().toInternalModel()
+
+        val loginToken = userService.loginUser(loginRequest)
+        call.respond(LoginResponseDto(token = loginToken.toString()))
     }
 }

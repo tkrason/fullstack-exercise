@@ -6,6 +6,7 @@ import com.example.model.UserStatus
 import com.mongodb.client.model.Filters
 import com.mongodb.client.model.Updates
 import com.mongodb.kotlin.client.coroutine.MongoDatabase
+import kotlinx.coroutines.flow.firstOrNull
 import org.koin.core.annotation.Singleton
 
 @Singleton
@@ -28,5 +29,9 @@ class UserRepository(
             filter = Filters.eq(User::emailVerificationToken.name, token),
             update = Updates.set(User::status.name, UserStatus.EMAIL_VERIFIED),
         )
+    }
+
+    suspend fun findUserByUserNameOrNull(userName: String) = withCollection {
+        find(filter = Filters.eq(User::userName.name, userName)).firstOrNull()
     }
 }
