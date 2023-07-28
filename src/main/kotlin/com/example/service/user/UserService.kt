@@ -13,8 +13,10 @@ import com.example.service.user.exception.UsernameAlreadyExistsException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.bson.types.ObjectId
 import org.koin.core.annotation.Singleton
 import java.util.UUID
@@ -28,7 +30,12 @@ class UserService(private val userRepository: UserRepository) : ModelService<Use
 
     @OptIn(ExperimentalCoroutinesApi::class)
     private val userServiceSchedulerDispatcher = Dispatchers.IO.limitedParallelism(1)
-    private val userServiceSchedulerScope = CoroutineScope(userServiceSchedulerDispatcher)
+    private val userServiceSchedulerScope = CoroutineScope(userServiceSchedulerDispatcher + SupervisorJob())
+
+    /**
+     *  Returns userId tied to token, or null if token is invalid.
+     */
+    fun getUserIdFromTokenOrNull(token: String) = userIssuedLoginTokenToUserId[UUID.fromString(token)]
 
     /**
      *  Saves new user if username is unique and returns email verification token for this user.
@@ -82,7 +89,7 @@ class UserService(private val userRepository: UserRepository) : ModelService<Use
 
     private suspend fun getLoginTokenAndScheduleItsRemoval(userId: ObjectId): UUID {
         val loginToken = UUID.randomUUID()
-        userIssuedLoginTokenToUserId[loginToken] = userId
+        withContext(userServiceSchedulerDispatcher) { userIssuedLoginTokenToUserId[loginToken] = userId }
         userServiceSchedulerScope.launch { removeTokenAfterDelay(loginToken) }
         return loginToken
     }
