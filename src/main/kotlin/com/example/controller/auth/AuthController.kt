@@ -7,12 +7,14 @@ import com.example.controller.auth.dto.RegisterNewUserRequestDto
 import com.example.controller.auth.dto.RegisterNewUserResponseDto
 import com.example.controller.auth.dto.toInternalModel
 import com.example.service.user.UserService
+import io.github.smiley4.ktorswaggerui.dsl.get
 import io.github.smiley4.ktorswaggerui.dsl.post
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.call
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
+import io.ktor.server.util.getOrFail
 import org.koin.core.annotation.Singleton
 
 @Singleton(binds = [Controller::class])
@@ -24,10 +26,11 @@ class AuthController(
     useBearerAuth = false,
 ) {
 
-    private val apiTags = listOf("registration")
+    private val apiTags = listOf("Auth")
 
     override fun Route.routesForRegistrationOnBasePath() {
         registerNewUser()
+        verifyUser()
     }
 
     private fun Route.registerNewUser() = post("/register", {
@@ -47,5 +50,18 @@ class AuthController(
                 verifyEmailLink = "localhost:${config.port}/${super.basePath}/verify?token=$verificationToken",
             ),
         )
+    }
+
+    private fun Route.verifyUser() = get("/verify", {
+        tags = apiTags
+        description = "Verify user with the provided token."
+        request { queryParameter<String>("token") { description = "User verification token" } }
+        response {
+            HttpStatusCode.NoContent to { }
+        }
+    }) {
+        val token = call.parameters.getOrFail("token")
+        userService.verifyUser(token)
+        call.respond(HttpStatusCode.OK)
     }
 }

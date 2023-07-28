@@ -2,7 +2,9 @@ package com.example.repository
 
 import com.example.application.Mongo
 import com.example.model.User
+import com.example.model.UserStatus
 import com.mongodb.client.model.Filters
+import com.mongodb.client.model.Updates
 import com.mongodb.kotlin.client.coroutine.MongoDatabase
 import org.koin.core.annotation.Singleton
 
@@ -19,5 +21,12 @@ class UserRepository(
         count(filter = {
             Filters.eq(User::userName.name, userName)
         })
+    }
+
+    suspend fun verifyUserEmailWhereTokenOrNull(token: String) = withCollection {
+        findOneAndUpdate(
+            filter = Filters.eq(User::emailVerificationToken.name, token),
+            update = Updates.set(User::status.name, UserStatus.EMAIL_VERIFIED),
+        )
     }
 }

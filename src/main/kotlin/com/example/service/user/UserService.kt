@@ -37,4 +37,8 @@ class UserService(private val userRepository: UserRepository) : ModelService<Use
     private suspend fun isUsernameTaken(userName: String): Boolean {
         return userRepository.countUserNameOccurrences(userName) != 0L
     }
+
+    suspend fun verifyUser(token: String) {
+        userRepository.verifyUserEmailWhereTokenOrNull(token)
+    }
 }

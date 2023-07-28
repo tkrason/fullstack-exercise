@@ -10,7 +10,11 @@ data class RegisterNewUserRequestDto(
     val password: String,
 )
 
-fun RegisterNewUserRequestDto.toInternalModel() = RegisterNewUserRequest(userName, email, password)
+fun RegisterNewUserRequestDto.toInternalModel() = RegisterNewUserRequest(
+    userName = userName,
+    email = email,
+    password = password,
+)
 
 @Serializable
 data class RegisterNewUserResponseDto(
